@@ -1,0 +1,17 @@
+{
+  "name": "delta-session-relay",
+  "description": "Delta Society Claude Code 교육 세션 로그를 참가자가 직접 Delta로 전송할 수 있게 해주는 플러그인. /send-session-log 실행 시 인증코드/참가자 이름/회차 제목/회차 번호를 물어본 뒤 현재 세션의 트랜스크립트를 업로드한다.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Delta Society",
+    "url": "https://github.com/xavierchoi"
+  },
+  "homepage": "https://github.com/xavierchoi/delta-session-relay",
+  "repository": "https://github.com/xavierchoi/delta-session-relay",
+  "keywords": [
+    "delta-society",
+    "session-log",
+    "training",
+    "education"
+  ]
+}

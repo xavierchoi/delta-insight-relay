@@ -1,0 +1,15 @@
+{
+  "name": "delta-session-relay-marketplace",
+  "owner": {
+    "name": "xavierchoi",
+    "url": "https://github.com/xavierchoi"
+  },
+  "plugins": [
+    {
+      "name": "delta-session-relay",
+      "source": "./",
+      "description": "Delta Society Claude Code 교육 세션이 끝난 뒤, 참가자가 /send-session-log 한 번으로 세션 로그를 Delta 서버에 전송하는 얇은 플러그인.",
+      "version": "1.0.0"
+    }
+  ]
+}

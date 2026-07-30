@@ -1,0 +1,97 @@
+const express = require('express');
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+
+const app = express();
+const upload = multer({ dest: os.tmpdir(), limits: { fileSize: 200 * 1024 * 1024 } });
+
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
+const CODES_MAP = JSON.parse(process.env.SESSION_CODES || '{}');
+
+function slugify(str) {
+  return (
+    String(str)
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-가-힣]/g, '')
+      .slice(0, 60) || 'unknown'
+  );
+}
+
+// 인증코드가 고객사를 가리키는 유일한 키다. 코드를 모르면 업로드 자체가 불가능하므로,
+// 매핑에 없는 코드는 조용히 무시하지 않고 null을 반환해 401로 거부한다.
+//
+// 재전송은 덮어쓰지 않고 -2, -3 접미사를 붙여 모두 보존한다. 교육 회차 분석이 목적이라
+// "참가자가 두 번 보냈다"는 사실 자체도 신호가 될 수 있고, 실수로 덮어써서 원본을 잃는 것보다
+// 파일이 몇 개 늘어나는 편이 회복 가능하다.
+function resolveUpload(code, meta) {
+  const clientName = CODES_MAP[code];
+  if (!clientName) return null;
+
+  const base = [
+    meta.date,
+    `r${slugify(meta.round)}`,
+    slugify(meta.sessionTitle),
+    slugify(meta.participantName),
+  ].join('_');
+
+  const dir = slugify(clientName);
+  let relativePath = path.join(dir, `${base}.jsonl`);
+  let n = 1;
+  while (fs.existsSync(path.join(DATA_DIR, relativePath))) {
+    n += 1;
+    relativePath = path.join(dir, `${base}-${n}.jsonl`);
+  }
+
+  return { clientName, relativePath };
+}
+
+app.post('/upload', upload.single('file'), (req, res) => {
+  const {
+    code,
+    participant_name: participantName,
+    session_title: sessionTitle,
+    round,
+    date,
+  } = req.body;
+
+  if (!code || !participantName || !sessionTitle || !round || !req.file) {
+    if (req.file) fs.unlinkSync(req.file.path);
+    return res.status(400).json({ error: 'missing required fields' });
+  }
+
+  const resolved = resolveUpload(code, { participantName, sessionTitle, round, date });
+
+  if (!resolved) {
+    fs.unlinkSync(req.file.path);
+    return res.status(401).json({ error: 'invalid code' });
+  }
+
+  const fullPath = path.join(DATA_DIR, resolved.relativePath);
+  fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+  fs.renameSync(req.file.path, fullPath);
+  fs.writeFileSync(
+    `${fullPath}.meta.json`,
+    JSON.stringify(
+      {
+        clientName: resolved.clientName,
+        participantName,
+        sessionTitle,
+        round,
+        date,
+        receivedAt: new Date().toISOString(),
+      },
+      null,
+      2
+    )
+  );
+
+  res.json({ ok: true, path: resolved.relativePath });
+});
+
+app.get('/health', (req, res) => res.json({ ok: true }));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`delta-session-relay listening on ${PORT}`));
