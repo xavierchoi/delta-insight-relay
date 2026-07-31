@@ -1,1 +1,1 @@
-https://REPLACE-ME.up.railway.app/upload
+https://relay-production-aafa.up.railway.app/upload

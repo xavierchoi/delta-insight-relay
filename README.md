@@ -38,8 +38,13 @@ Delta Society의 Claude Code 교육 회차가 끝난 뒤, 참가자가 명령 �
    | `DATA_DIR` | `/data` |
    | `SESSION_CODES` | `{"1234":"고객사A","5678":"고객사B"}` |
 5. **Settings → Networking → Generate Domain** 으로 공개 URL 발급
+   Generate Domain은 타깃 포트를 3000으로 잡는 경우가 있는데, Railway는 `PORT=8080`을 주입한다.
+   502가 나면 도메인의 타깃 포트를 **8080**으로 고친다.
 6. 발급된 URL을 `skills/send-session-log/endpoint.txt`에 `https://<도메인>/upload` 형태로 반영하고 커밋·푸시
    (참가자는 이 파일을 통해 목적지를 알게 되므로, 이 커밋 전에 설치한 참가자는 재설치가 필요하다)
+
+> 서버는 업로드 임시파일을 `$DATA_DIR/tmp`에 만든다. 저장 대상과 같은 볼륨이어야 rename이
+> EXDEV로 실패하지 않기 때문이다. 별도의 `TMPDIR` 지정이나 커스텀 start command는 필요 없다.
 
 ### 인증코드 운영
 

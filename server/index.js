@@ -2,13 +2,31 @@ const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-const os = require('os');
 
 const app = express();
-const upload = multer({ dest: os.tmpdir(), limits: { fileSize: 200 * 1024 * 1024 } });
 
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const CODES_MAP = JSON.parse(process.env.SESSION_CODES || '{}');
+
+// 업로드 임시파일을 DATA_DIR 안에 두는 것이 중요하다. os.tmpdir()에 두면 컨테이너 파일시스템에
+// 떨어지는데, 저장 대상인 DATA_DIR이 마운트된 볼륨이면 서로 다른 디바이스가 되어
+// rename이 EXDEV로 실패한다. 같은 디바이스에 두면 rename이 원자적으로 동작한다.
+const TMP_DIR = path.join(DATA_DIR, 'tmp');
+fs.mkdirSync(TMP_DIR, { recursive: true });
+
+const upload = multer({ dest: TMP_DIR, limits: { fileSize: 200 * 1024 * 1024 } });
+
+// TMPDIR 설정이 어긋나 임시파일이 다른 디바이스에 생기더라도 업로드가 죽지 않도록,
+// EXDEV일 때는 복사 후 삭제로 폴백한다.
+function moveFile(from, to) {
+  try {
+    fs.renameSync(from, to);
+  } catch (err) {
+    if (err.code !== 'EXDEV') throw err;
+    fs.copyFileSync(from, to);
+    fs.unlinkSync(from);
+  }
+}
 
 function slugify(str) {
   return (
@@ -71,7 +89,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
 
   const fullPath = path.join(DATA_DIR, resolved.relativePath);
   fs.mkdirSync(path.dirname(fullPath), { recursive: true });
-  fs.renameSync(req.file.path, fullPath);
+  moveFile(req.file.path, fullPath);
   fs.writeFileSync(
     `${fullPath}.meta.json`,
     JSON.stringify(
