@@ -1,17 +1,26 @@
 #!/usr/bin/env bash
 # Delta Society 인사이트 제출 스크립트
 # 사용법: upload.sh <code> <participant_name> <team> <session_title>
+#         upload.sh --check                (환경 점검만, 제출하지 않음)
+#
+# --check는 회차 '시작' 시점에 돌리기 위한 것이다. 제출은 회차가 끝난 뒤에 일어나는데,
+# 그때 환경 문제로 실패하면 고칠 시간이 없고 기록도 사라진다. 실패를 앞으로 당긴다.
 set -uo pipefail
 
-if [ "$#" -ne 4 ]; then
+CHECK_ONLY=0
+if [ "${1:-}" = "--check" ]; then
+  CHECK_ONLY=1
+  CODE=""; PARTICIPANT=""; TEAM=""; TITLE=""
+elif [ "$#" -ne 4 ]; then
   echo "사용법: upload.sh <code> <participant_name> <team> <session_title>" >&2
+  echo "        upload.sh --check" >&2
   exit 1
+else
+  CODE="$1"
+  PARTICIPANT="$2"
+  TEAM="$3"
+  TITLE="$4"
 fi
-
-CODE="$1"
-PARTICIPANT="$2"
-TEAM="$3"
-TITLE="$4"
 
 if [ -z "${CLAUDE_CODE_SESSION_ID:-}" ]; then
   echo "오류: CLAUDE_CODE_SESSION_ID 환경변수를 찾을 수 없습니다. Claude Code 세션 안에서 실행해주세요." >&2
@@ -44,6 +53,35 @@ OTHER_SESSIONS=$(find "$TRANSCRIPT_DIR" -maxdepth 1 -type f -name '*.jsonl' -mmi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENDPOINT="${DELTA_RELAY_ENDPOINT:-$(tr -d '[:space:]' < "$SCRIPT_DIR/../endpoint.txt")}"
 TODAY=$(date +%F)
+
+if [ "$CHECK_ONLY" -eq 1 ]; then
+  echo "제출 환경 점검"
+  echo "─────────────────────────────"
+  echo "세션 ID     : $CLAUDE_CODE_SESSION_ID"
+  echo "기록 파일   : $TRANSCRIPT"
+  SIZE=$(wc -c < "$TRANSCRIPT" 2>/dev/null | tr -d '[:space:]')
+  echo "현재 크기   : ${SIZE:-?} bytes"
+  echo "제출 주소   : $ENDPOINT"
+  if [ "${OTHER_SESSIONS:-0}" -gt 0 ]; then
+    echo "다른 기록   : ${OTHER_SESSIONS}개 (회차 중 재시작했다면 분할된 것)"
+  fi
+  echo "─────────────────────────────"
+
+  HEALTH_URL="${ENDPOINT%/upload}/health"
+  HEALTH=$(curl -sS --max-time 20 -w "\n%{http_code}" "$HEALTH_URL" 2>&1)
+  HEALTH_CODE=$(echo "$HEALTH" | tail -n1)
+  if [ "$HEALTH_CODE" = "200" ]; then
+    echo "서버 연결   : 정상"
+    echo ""
+    echo "점검 완료. 회차가 끝나면 제출하실 수 있습니다."
+    exit 0
+  else
+    echo "서버 연결   : 실패"
+    echo ""
+    echo "서버에 연결하지 못했습니다. 진행자에게 알려주세요." >&2
+    exit 1
+  fi
+fi
 
 # 값 전달에 -F 대신 --form-string을 쓴다. -F는 값이 '@'로 시작하면 파일을 읽으려 하고
 # ';'를 파라미터 구분자로 해석한다. 이름이 '@'로 시작하거나 회차 제목에 ';'가 들어가면
