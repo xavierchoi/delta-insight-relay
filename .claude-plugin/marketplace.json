@@ -1,15 +1,15 @@
 {
-  "name": "delta-session-relay-marketplace",
+  "name": "delta-insight-relay-marketplace",
   "owner": {
     "name": "xavierchoi",
     "url": "https://github.com/xavierchoi"
   },
   "plugins": [
     {
-      "name": "delta-session-relay",
+      "name": "delta-insight-relay",
       "source": "./",
       "description": "교육 회차가 끝날 때 참가자가 \"오늘 인사이트 제출해줘\" 한 마디로 학습 기록을 교육팀에 제출하는 얇은 플러그인.",
-      "version": "1.0.0"
+      "version": "1.1.0"
     }
   ]
 }

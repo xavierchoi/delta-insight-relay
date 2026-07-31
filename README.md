@@ -1,4 +1,4 @@
-# delta-session-relay
+# delta-insight-relay
 
 Delta Society의 Claude Code 교육 회차가 끝날 때, 참가자가 한 마디로 오늘의 학습 기록을 교육팀에 제출하는 얇은 플러그인 + 수신 서버.
 
@@ -19,10 +19,10 @@ Delta Society의 Claude Code 교육 회차가 끝날 때, 참가자가 한 마�
 
 1. 플러그인 설치 (교육 시작 시 1회):
    ```
-   /plugin marketplace add https://github.com/xavierchoi/delta-session-relay.git
-   /plugin install delta-session-relay
+   /plugin marketplace add https://github.com/xavierchoi/delta-insight-relay.git
+   /plugin install delta-insight-relay
    ```
-   `owner/repo` 축약형(`xavierchoi/delta-session-relay`)은 SSH로 클론을 시도하므로,
+   `owner/repo` 축약형(`xavierchoi/delta-insight-relay`)은 SSH로 클론을 시도하므로,
    GitHub SSH 키가 없는 참가자 PC에서는 실패할 수 있다. 위처럼 **HTTPS URL 전체**를 쓴다.
 2. 회차가 끝나면 세션에서 그냥 이렇게 말하면 된다:
    ```
@@ -49,6 +49,12 @@ Delta Society의 Claude Code 교육 회차가 끝날 때, 참가자가 한 마�
 
 > 서버는 업로드 임시파일을 `$DATA_DIR/tmp`에 만든다. 저장 대상과 같은 볼륨이어야 rename이
 > EXDEV로 실패하지 않기 때문이다. 별도의 `TMPDIR` 지정이나 커스텀 start command는 필요 없다.
+
+### 플러그인 수정 시 반드시 버전을 올릴 것
+
+플러그인 캐시는 **버전 번호로 키를 잡는다.** `plugin.json`의 `version`을 올리지 않고 푸시하면,
+마켓플레이스를 갱신해도 이미 설치한 참가자에게는 변경이 전달되지 않는다 (재설치도 "이미 설치됨"으로 넘어간다).
+회차 중에 무언가를 고쳐야 하면 코드 수정과 버전 올리기를 항상 같이 한다.
 
 ### 인증코드 운영
 
