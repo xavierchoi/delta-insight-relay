@@ -33,6 +33,14 @@ if [ -z "$TRANSCRIPT" ] || [ ! -f "$TRANSCRIPT" ]; then
   exit 1
 fi
 
+# 회차 중 Claude Code를 재시작하면 세션 ID가 바뀌어 트랜스크립트가 여러 개로 쪼개진다.
+# 이 스크립트는 현재 세션 것만 보내므로, 앞부분이 조용히 누락된 채 "제출 완료"가 뜬다.
+# 같은 프로젝트에서 최근 6시간 내에 수정된 다른 세션 기록이 있으면 알려준다.
+# -mmin은 GNU/BSD find 모두 지원한다 (-newermt는 그렇지 않다).
+TRANSCRIPT_DIR="$(dirname "$TRANSCRIPT")"
+OTHER_SESSIONS=$(find "$TRANSCRIPT_DIR" -maxdepth 1 -type f -name '*.jsonl' -mmin -360 \
+  ! -name "$CLAUDE_CODE_SESSION_ID.jsonl" 2>/dev/null | wc -l | tr -d '[:space:]')
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENDPOINT="${DELTA_RELAY_ENDPOINT:-$(tr -d '[:space:]' < "$SCRIPT_DIR/../endpoint.txt")}"
 TODAY=$(date +%F)
@@ -63,6 +71,12 @@ fi
 
 if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
   echo "제출 완료: $BODY"
+  if [ "${OTHER_SESSIONS:-0}" -gt 0 ]; then
+    echo ""
+    echo "참고: 이 프로젝트에 최근 다른 세션 기록이 ${OTHER_SESSIONS}개 더 있습니다."
+    echo "회차 중 Claude Code를 재시작하셨다면 앞부분이 이번 제출에 포함되지 않았습니다."
+    echo "해당된다면 진행자에게 알려주세요."
+  fi
   exit 0
 elif [ "$HTTP_CODE" = "401" ]; then
   echo "제출 실패: 인증코드가 맞지 않습니다. 진행자가 알려준 숫자 6자리를 다시 확인해주세요." >&2
