@@ -8,7 +8,7 @@
     {
       "name": "delta-session-relay",
       "source": "./",
-      "description": "Delta Society Claude Code 교육 세션이 끝난 뒤, 참가자가 /send-session-log 한 번으로 세션 로그를 Delta 서버에 전송하는 얇은 플러그인.",
+      "description": "교육 회차가 끝날 때 참가자가 \"오늘 인사이트 제출해줘\" 한 마디로 학습 기록을 교육팀에 제출하는 얇은 플러그인.",
       "version": "1.0.0"
     }
   ]

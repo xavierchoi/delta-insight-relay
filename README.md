@@ -1,16 +1,18 @@
 # delta-session-relay
 
-Delta Society의 Claude Code 교육 회차가 끝난 뒤, 참가자가 명령 한 번으로 자기 세션 로그를 Delta에 전송하는 얇은 플러그인 + 수신 서버.
+Delta Society의 Claude Code 교육 회차가 끝날 때, 참가자가 한 마디로 오늘의 학습 기록을 교육팀에 제출하는 얇은 플러그인 + 수신 서버.
 
-교육 회차에서 참가자가 말로 표현하지 못한 막힘, 페어코딩 중 눈으로 놓친 지점을 세션 트랜스크립트로 되짚어 다음 회차를 개선하는 것이 목적이다.
+참가자가 말로 표현하지 못한 막힘, 페어코딩 중 진행자가 눈으로 놓친 지점을 세션 기록으로 되짚어 다음 회차를 개선하는 것이 목적이다.
+
+참가자에게는 "인사이트 제출"로 프레이밍하지만, 실제로 전달되는 것은 **세션 대화 기록 원본 전체**다. 요약하거나 가공하지 않는다 — 진행자가 놓친 지점을 찾는 것이 목적이므로 가공이 오히려 목적을 훼손한다. 이 점은 참가자에게 구두로 분명히 고지한다.
 
 ## 구성
 
 | 경로 | 역할 |
 |------|------|
 | `.claude-plugin/` | 마켓플레이스 / 플러그인 메타데이터 |
-| `skills/send-session-log/` | 참가자가 실행하는 스킬 (인터뷰 → 업로드) |
-| `skills/send-session-log/endpoint.txt` | 업로드 목적지 URL (배포 후 반드시 수정) |
+| `skills/submit-insight/` | 참가자가 실행하는 스킬 (인터뷰 → 제출) |
+| `skills/submit-insight/endpoint.txt` | 제출 목적지 URL (배포 후 반드시 수정) |
 | `server/` | 수신 서버 (Express, Railway 배포용) |
 
 ## 참가자 사용법
@@ -24,9 +26,9 @@ Delta Society의 Claude Code 교육 회차가 끝난 뒤, 참가자가 명령 �
    GitHub SSH 키가 없는 참가자 PC에서는 실패할 수 있다. 위처럼 **HTTPS URL 전체**를 쓴다.
 2. 회차가 끝나면 세션에서 그냥 이렇게 말하면 된다:
    ```
-   세션 로그 보내줘
+   오늘 인사이트 제출해줘
    ```
-   Claude가 인증코드 · 이름 · 회차 제목 · 회차 번호를 물어보고 전송까지 처리한다. 날짜와 트랜스크립트 파일 위치는 자동으로 채워진다.
+   Claude가 인증코드 · 이름 · 회차 제목 · 회차 번호를 물어보고 제출까지 처리한다. 날짜와 기록 파일 위치는 자동으로 채워진다.
 
 ## 서버 배포 (Railway)
 
@@ -42,7 +44,7 @@ Delta Society의 Claude Code 교육 회차가 끝난 뒤, 참가자가 명령 �
 5. **Settings → Networking → Generate Domain** 으로 공개 URL 발급
    Generate Domain은 타깃 포트를 3000으로 잡는 경우가 있는데, Railway는 `PORT=8080`을 주입한다.
    502가 나면 도메인의 타깃 포트를 **8080**으로 고친다.
-6. 발급된 URL을 `skills/send-session-log/endpoint.txt`에 `https://<도메인>/upload` 형태로 반영하고 커밋·푸시
+6. 발급된 URL을 `skills/submit-insight/endpoint.txt`에 `https://<도메인>/upload` 형태로 반영하고 커밋·푸시
    (참가자는 이 파일을 통해 목적지를 알게 되므로, 이 커밋 전에 설치한 참가자는 재설치가 필요하다)
 
 > 서버는 업로드 임시파일을 `$DATA_DIR/tmp`에 만든다. 저장 대상과 같은 볼륨이어야 rename이
@@ -71,7 +73,7 @@ DATA_DIR=./data SESSION_CODES='{"1234":"테스트고객사"}' PORT=38642 npm sta
 
 # 다른 터미널 (Claude Code 세션 안에서)
 DELTA_RELAY_ENDPOINT=http://127.0.0.1:38642/upload \
-  bash skills/send-session-log/scripts/upload.sh "1234" "이름" "회차 제목" "1"
+  bash skills/submit-insight/scripts/upload.sh "1234" "이름" "회차 제목" "1"
 ```
 
 `DELTA_RELAY_ENDPOINT` 환경변수는 `endpoint.txt`를 덮어쓴다 — 테스트 전용이다.
