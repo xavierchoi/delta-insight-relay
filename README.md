@@ -17,9 +17,11 @@ Delta Society의 Claude Code 교육 회차가 끝난 뒤, 참가자가 명령 �
 
 1. 플러그인 설치 (교육 시작 시 1회):
    ```
-   /plugin marketplace add xavierchoi/delta-session-relay
+   /plugin marketplace add https://github.com/xavierchoi/delta-session-relay.git
    /plugin install delta-session-relay
    ```
+   `owner/repo` 축약형(`xavierchoi/delta-session-relay`)은 SSH로 클론을 시도하므로,
+   GitHub SSH 키가 없는 참가자 PC에서는 실패할 수 있다. 위처럼 **HTTPS URL 전체**를 쓴다.
 2. 회차가 끝나면 세션에서 그냥 이렇게 말하면 된다:
    ```
    세션 로그 보내줘
