@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# Delta Society 세션 로그 업로드 스크립트
-# 사용법: upload.sh <code> <participant_name> <session_title> <round>
+# Delta Society 인사이트 제출 스크립트
+# 사용법: upload.sh <code> <participant_name> <team> <session_title>
 set -uo pipefail
 
 if [ "$#" -ne 4 ]; then
-  echo "사용법: upload.sh <code> <participant_name> <session_title> <round>" >&2
+  echo "사용법: upload.sh <code> <participant_name> <team> <session_title>" >&2
   exit 1
 fi
 
 CODE="$1"
 PARTICIPANT="$2"
-TITLE="$3"
-ROUND="$4"
+TEAM="$3"
+TITLE="$4"
 
 if [ -z "${CLAUDE_CODE_SESSION_ID:-}" ]; then
   echo "오류: CLAUDE_CODE_SESSION_ID 환경변수를 찾을 수 없습니다. Claude Code 세션 안에서 실행해주세요." >&2
@@ -40,8 +40,8 @@ TODAY=$(date +%F)
 RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$ENDPOINT" \
   -F "code=$CODE" \
   -F "participant_name=$PARTICIPANT" \
+  -F "team=$TEAM" \
   -F "session_title=$TITLE" \
-  -F "round=$ROUND" \
   -F "date=$TODAY" \
   -F "file=@$TRANSCRIPT;type=application/jsonl")
 
@@ -49,9 +49,9 @@ HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
 BODY=$(echo "$RESPONSE" | sed '$d')
 
 if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
-  echo "전송 완료: $BODY"
+  echo "제출 완료: $BODY"
   exit 0
 else
-  echo "전송 실패 (HTTP $HTTP_CODE): $BODY" >&2
+  echo "제출 실패 (HTTP $HTTP_CODE): $BODY" >&2
   exit 1
 fi

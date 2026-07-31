@@ -50,8 +50,8 @@ function resolveUpload(code, meta) {
 
   const base = [
     meta.date,
-    `r${slugify(meta.round)}`,
     slugify(meta.sessionTitle),
+    slugify(meta.team),
     slugify(meta.participantName),
   ].join('_');
 
@@ -70,17 +70,17 @@ app.post('/upload', upload.single('file'), (req, res) => {
   const {
     code,
     participant_name: participantName,
+    team,
     session_title: sessionTitle,
-    round,
     date,
   } = req.body;
 
-  if (!code || !participantName || !sessionTitle || !round || !req.file) {
+  if (!code || !participantName || !team || !sessionTitle || !req.file) {
     if (req.file) fs.unlinkSync(req.file.path);
     return res.status(400).json({ error: 'missing required fields' });
   }
 
-  const resolved = resolveUpload(code, { participantName, sessionTitle, round, date });
+  const resolved = resolveUpload(code, { participantName, team, sessionTitle, date });
 
   if (!resolved) {
     fs.unlinkSync(req.file.path);
@@ -96,8 +96,8 @@ app.post('/upload', upload.single('file'), (req, res) => {
       {
         clientName: resolved.clientName,
         participantName,
+        team,
         sessionTitle,
-        round,
         date,
         receivedAt: new Date().toISOString(),
       },
@@ -112,4 +112,4 @@ app.post('/upload', upload.single('file'), (req, res) => {
 app.get('/health', (req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`delta-session-relay listening on ${PORT}`));
+app.listen(PORT, () => console.log(`delta-insight-relay listening on ${PORT}`));

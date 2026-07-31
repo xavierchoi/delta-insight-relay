@@ -28,7 +28,7 @@ Delta Society의 Claude Code 교육 회차가 끝날 때, 참가자가 한 마�
    ```
    오늘 인사이트 제출해줘
    ```
-   Claude가 인증코드 · 이름 · 회차 제목 · 회차 번호를 물어보고 제출까지 처리한다. 날짜와 기록 파일 위치는 자동으로 채워진다.
+   Claude가 인증코드 · 이름 · 팀 소속 · 회차 제목을 물어보고 제출까지 처리한다. 날짜와 기록 파일 위치는 자동으로 채워진다.
 
 ## 서버 배포 (Railway)
 
@@ -40,7 +40,7 @@ Delta Society의 Claude Code 교육 회차가 끝날 때, 참가자가 한 마�
    | 변수 | 값 |
    |------|-----|
    | `DATA_DIR` | `/data` |
-   | `SESSION_CODES` | `{"1234":"고객사A","5678":"고객사B"}` |
+   | `SESSION_CODES` | `{"945388":"medit"}` |
 5. **Settings → Networking → Generate Domain** 으로 공개 URL 발급
    Generate Domain은 타깃 포트를 3000으로 잡는 경우가 있는데, Railway는 `PORT=8080`을 주입한다.
    502가 나면 도메인의 타깃 포트를 **8080**으로 고친다.
@@ -63,7 +63,7 @@ Delta Society의 Claude Code 교육 회차가 끝날 때, 참가자가 한 마�
 코드는 `scripts/gen-code.sh`로 뽑는다:
 
 ```bash
-bash scripts/gen-code.sh        # 예: RHRRQA
+bash scripts/gen-code.sh        # 예: 945388
 ```
 
 날짜를 그대로 코드로 쓰지 않는다. 업로드 URL이 이 공개 레포에 담겨 있어 주소는 이미 알려진 값이고,
@@ -77,22 +77,22 @@ bash scripts/gen-code.sh        # 예: RHRRQA
 
 ```
 /data/
-└── 고객사A/
-    ├── 2026-07-30_r1_Claude-Code-기초_최훈민.jsonl
-    └── 2026-07-30_r1_Claude-Code-기초_최훈민.meta.json
+└── medit/
+    ├── 2026-07-31_Claude-Code-기초_경영전략팀_최훈민.jsonl
+    └── 2026-07-31_Claude-Code-기초_경영전략팀_최훈민.jsonl.meta.json
 ```
 
-같은 참가자가 같은 회차를 다시 전송하면 덮어쓰지 않고 `-2`, `-3` 접미사를 붙여 모두 보존한다.
+같은 참가자가 같은 회차를 다시 제출하면 덮어쓰지 않고 `-2`, `-3` 접미사를 붙여 모두 보존한다.
 
 ## 로컬 테스트
 
 ```bash
 cd server && npm install
-DATA_DIR=./data SESSION_CODES='{"1234":"테스트고객사"}' PORT=38642 npm start
+DATA_DIR=./data SESSION_CODES='{"945388":"medit"}' PORT=38642 npm start
 
 # 다른 터미널 (Claude Code 세션 안에서)
 DELTA_RELAY_ENDPOINT=http://127.0.0.1:38642/upload \
-  bash skills/submit-insight/scripts/upload.sh "1234" "이름" "회차 제목" "1"
+  bash skills/submit-insight/scripts/upload.sh "945388" "이름" "팀 소속" "회차 제목"
 ```
 
 `DELTA_RELAY_ENDPOINT` 환경변수는 `endpoint.txt`를 덮어쓴다 — 테스트 전용이다.
