@@ -37,20 +37,36 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENDPOINT="${DELTA_RELAY_ENDPOINT:-$(tr -d '[:space:]' < "$SCRIPT_DIR/../endpoint.txt")}"
 TODAY=$(date +%F)
 
-RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "$ENDPOINT" \
-  -F "code=$CODE" \
-  -F "participant_name=$PARTICIPANT" \
-  -F "team=$TEAM" \
-  -F "session_title=$TITLE" \
-  -F "date=$TODAY" \
+# 값 전달에 -F 대신 --form-string을 쓴다. -F는 값이 '@'로 시작하면 파일을 읽으려 하고
+# ';'를 파라미터 구분자로 해석한다. 이름이 '@'로 시작하거나 회차 제목에 ';'가 들어가면
+# 값이 조용히 잘리거나 제출 자체가 실패한다 — 회차가 끝난 뒤라 복구가 안 되는 종류의 실패다.
+RESPONSE=$(curl -sS --max-time 300 -w "\n%{http_code}" -X POST "$ENDPOINT" \
+  --form-string "code=$CODE" \
+  --form-string "participant_name=$PARTICIPANT" \
+  --form-string "team=$TEAM" \
+  --form-string "session_title=$TITLE" \
+  --form-string "date=$TODAY" \
   -F "file=@$TRANSCRIPT;type=application/jsonl")
+CURL_EXIT=$?
 
 HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
 BODY=$(echo "$RESPONSE" | sed '$d')
 
+# 연결 자체가 안 되면 HTTP_CODE가 000이고 본문이 비어, 참가자는 아무 단서도 못 받는다.
+if [ "$CURL_EXIT" -eq 28 ]; then
+  echo "제출 실패: 시간이 초과됐습니다. 네트워크를 확인한 뒤 다시 시도하거나 진행자에게 알려주세요." >&2
+  exit 1
+elif [ "$CURL_EXIT" -ne 0 ] || [ "$HTTP_CODE" = "000" ]; then
+  echo "제출 실패: 서버에 연결하지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도하거나 진행자에게 알려주세요." >&2
+  exit 1
+fi
+
 if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
   echo "제출 완료: $BODY"
   exit 0
+elif [ "$HTTP_CODE" = "401" ]; then
+  echo "제출 실패: 인증코드가 맞지 않습니다. 진행자가 알려준 숫자 6자리를 다시 확인해주세요." >&2
+  exit 1
 else
   echo "제출 실패 (HTTP $HTTP_CODE): $BODY" >&2
   exit 1

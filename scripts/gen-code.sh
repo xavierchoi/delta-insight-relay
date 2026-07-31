@@ -14,7 +14,8 @@ while [ "${#code}" -lt "$LEN" ]; do
   # od로 난수 바이트를 읽어 알파벳 길이로 나머지 연산. 편향을 피하기 위해
   # 알파벳 크기의 배수를 넘는 값은 버린다.
   for byte in $(od -An -tu1 -N64 /dev/urandom); do
-    if [ "$byte" -lt 248 ]; then
+    # 알파벳 크기(10)의 배수인 250 미만만 채택해 나머지 연산 편향을 없앤다.
+    if [ "$byte" -lt 250 ]; then
       idx=$(( byte % ${#ALPHABET} ))
       code="${code}${ALPHABET:$idx:1}"
       [ "${#code}" -ge "$LEN" ] && break
